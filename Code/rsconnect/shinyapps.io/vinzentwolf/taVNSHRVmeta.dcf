@@ -1,0 +1,13 @@
+name: taVNSHRVmeta
+title: taVNSHRVmeta
+username:
+account: vinzentwolf
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 2753654
+bundleId: 3593296
+url: https://vinzentwolf.shinyapps.io/taVNSHRVmeta/
+when: 1599231656.05177
+asMultiple: FALSE
+asStatic: FALSE
+ignoredFiles: .RData|DataPrep.R|df.csv|FrequentistMA.R|MainEffectMA.R|Master.xlsx
