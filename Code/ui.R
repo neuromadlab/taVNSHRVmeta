@@ -71,7 +71,7 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                                  h4("Purpose:"),
                                  p("Synthesizing evidence in a meaningful way is challenging, especially in a newly emerging field like non-invasive brain stimulation that has only few studies with heterogeneous methods and results. By developing a living, interactive Bayesian meta-analysis on the influence of taVNS on HRV we are proposing a solution to overcome these difficulties. This analysis format allows to update the results as future research emerges and allows the reader to change inclusion criteria and prior settings, thus having increased transparency of the analysis."), br(),
                                  h4("Explanation:"),
-                                 p("Select inclusion criteria and prior settings in the panel on the left. Click 'Re-Calculate Meta-Analysis' or press Enter to rerun the analysis. Results are displayed in the central panels."), br(),
+                                 p("Select inclusion criteria and prior settings in the panel on the left. Click 'Re-Calculate Meta-Analysis' to rerun the analysis. Results are displayed in the central panels."), br(),
                                  h4("Paper:"),
                                  p("This app accompanies the following paper (Link to paper) where a more detailed explanation and an exemplary analysis can be found. Inclusion criteria and prior settings of the exemplary analysis correspond to the default criteria in the app."), br(),
                                  h4("Contact:"),
@@ -99,7 +99,8 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                                    pNN50: percentage of successive normal sinus RR intervals more than 50ms;
                                    LF/HF Ratio: low frequency to high frequency ratio;
                                    SDNN: standard deviation of all R-to-R intervals;
-                                   CVT: cardiac vagal tone calculated with 'phase shift demodulation'.")),
+                                   CVT: cardiac vagal tone calculated with 'phase shift demodulation';
+                                   RSA: respiratory sinus arrhythmia.")),
                         tabPanel("Outlier check", br(),
                                  h4("Boxplot graph:"), plotOutput("boxplot") %>% withSpinner(type = 6, color = "#3498DB")),
                         tabPanel("Forest plot", br(),

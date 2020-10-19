@@ -59,7 +59,7 @@ es <- as.data.frame(es<-escalc(m1i = df$Mean_HRV_intervention,
 
 #Generate factor variables
 df$Design<-factor(df$Design,levels = c(0,1),labels = c("between","within"))
-df$Sample<-factor(df$Sample,levels = c(0,4,5,7,8,9,10),labels = c("healthy","high worriers","Depression patients","Hypertension patients", "Pancreatitis patients", "Diastolic dysfunction patients", "Parkinson's disease patients"))
+df$Sample<-factor(df$Sample,levels = c(0,4,5,7,8,9,10,11),labels = c("healthy","high worriers","Depression patients","Hypertension patients", "Pancreatitis patients", "Diastolic dysfunction patients", "Parkinson's disease patients", "PTSD patients"))
 df$Blindness<-factor(df$Blindness,levels = c(0:2),labels = c("double blind","single blind","transparent"))
 df$Age.Category<-factor(df$Age.Category,levels = c(0,2,3),labels = c("adults","elderly", "adolescents"))
 df$Country<-factor(df$Country,levels = c(0,2:6,8),labels = c("US","Brazil","UK","Netherlands","Belgium","Germany","Denmark"))
@@ -70,7 +70,7 @@ df$taVNS.Device<-factor(df$taVNS.Device,levels = c(0:2),labels = c("Cerbomed","T
 df$Intensity.fixed.or.mean<-factor(df$Intensity.fixed.or.mean,levels = c(0:1),labels = c("individually","fixed"))
 df$Respiratory.Gated<-factor(df$Respiratory.Gated,levels = c(0,1),labels = c("no","yes"))
 df$HRV.Recording.Method<-factor(df$HRV.Recording.Method,levels = c(0,1,3),labels = c("ECG (glued)", "ECG (chest strap)", "Photoplethysmography"))
-df$HRV.Parameter<-factor(df$HRV.Parameter,levels = c(0:5),labels = c("RMSSD","HF-HRV","pNN50","LF/HF Ratio","SDNN","CVT"))
+df$HRV.Parameter<-factor(df$HRV.Parameter,levels = c(0:6),labels = c("RMSSD","HF-HRV","pNN50","LF/HF Ratio","SDNN","CVT", "RSA"))
 df$HRV.baseline<-factor(df$HRV.baseline,levels = c(0:1), labels = c("task baseline", "resting baseline"))
 df$Direction.of.effect<-factor(df$Direction.of.effect,levels = c(0:2),labels = c("null","positive","negative"))
 df$Inverse<-factor(df$Inverse,levels = c(0,1),labels = c("no","yes"))
@@ -81,10 +81,17 @@ df$pNN50<-factor(df$pNN50, levels = c(0,1), labels = c(" ", "x"))
 df$`LF/HF Ratio`<-factor(df$`LF/HF Ratio`, levels = c(0,1), labels = c(" ", "x"))
 df$SDNN<-factor(df$SDNN, levels = c(0,1), labels = c(" ", "x"))
 df$CVT<-factor(df$CVT, levels = c(0,1), labels = c(" ", "x"))
+df$RSA<-factor(df$RSA, levels = c(0,1), labels = c(" ", "x"))
 
 #Change publication year for Burger 2019a and 2019b, respectively
 df[13:16,4] <- 2019
+#Change publication year for Borges 2020a and 2020b, respectively
+df[71:94,4] <- 2020
+df[170:193,4] <- 2020
+#Change publication year for Ventura-Bort under review and in prep., respectively
+df[150:169,4] <- 2020
 df$Publication.Year <- as.numeric(df$Publication.Year)
+
 
 #Inverse LF/HF Ratio ES directions (because lower LF/HF-ratio means higher HRV)
 df$yi <- ifelse(df$Inverse=="yes", df$yi*(-1), df$yi*1)
