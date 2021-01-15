@@ -1,10 +1,10 @@
 #######################################################################################
-################### EFFECT OF taVNS ON HRV - A BAYSIAN META-ANALYSIS ##################
+################### EFFECT OF taVNS ON HRV - A BAYESIAN META-ANALYSIS #################
 #######################################################################################
 
-################### Shiny App v.2 20.08.2020 UI #######################################
-# Initialize #----
-# rm(list=ls())
+################### Shiny App v.2 21.12.2020 UI #######################################
+
+# Load required packages and source helper functions #----
 library(shiny)
 library(bayesmeta)
 library(cowplot)
@@ -21,11 +21,6 @@ library(shinythemes)
 library(stringr)
 library(tidyr)
 library(xtable)
-# if (!require("pacman")) install.packages("pacman")
-# library(pacman)
-# pacman::p_load(bayesmeta, car, cowplot, dplyr, DT, esc, data.table, 
-#                ggplot2, knitr, MAd, readr, readxl, R.rsp, shiny, 
-#                shinycssloaders, shinythemes, stringr, tidyr, xtable) 
 source("HelperFunctions.R")
 #----
 # Define UI
@@ -39,19 +34,20 @@ ui <- fluidPage(theme = shinytheme("cosmo"),
                       tabPanel("Study criteria",
                                checkboxGroupInput(inputId = "design", label = "Study design", choices = levels(df$Design), selected = levels(df$Design)),
                                checkboxGroupInput(inputId = "control", label = "Control type", choices = levels(df$Control.Type), selected = "sham"),
-                               checkboxGroupInput(inputId = "hrvparam", label = "Heart rate variability parameter", choices = levels(df$HRV.Parameter), selected = levels(df$HRV.Parameter)),
+                               checkboxGroupInput(inputId = "hrvparam", label = "Heart rate variability parameter", choices = levels(df$HRV.Parameter), selected = c("RMSSD", "HF-HRV", "pNN50", "CVT", "RSA")),
                                checkboxGroupInput(inputId = "sample", label = "Sample", choices = levels(df$Sample), selected = "healthy"),
-                               checkboxGroupInput(inputId = "age", label = "Age group", choices = levels(df$Age.Category), selected = levels(df$Age.Category)),
+                               sliderInput(inputId = "gender", label = "Percent females", min = min(df$Percent.Females), max = max(df$Percent.Females), value = c(min(df$Percent.Females), max(df$Percent.Females)), step = 1, sep = "", ticks = F),
+                               sliderInput(inputId = "age", label = "Age", min = min(df$Mean.Age), max = max(df$Mean.Age), value = c(min(df$Mean.Age), max(df$Mean.Age)), step = 1, sep = "", ticks = F),
                                checkboxGroupInput(inputId = "blind", label = "Blindness of Study", choices = levels(df$Blindness), selected = c("single blind", "double blind")),
-                               sliderInput(inputId = "pubyear", label = "Publication year >=", min = min(df$Publication.Year), max = max(df$Publication.Year), value = min(df$Publication.Year), step = 1, sep = "", ticks = F),
+                               sliderInput(inputId = "pubyear", label = "Publication year", min = min(df$Publication.Year), max = max(df$Publication.Year), value = c(min(df$Publication.Year), max(df$Publication.Year)), step = 1, sep = "", ticks = F),
                                checkboxGroupInput(inputId = "included", label = "Include/exclude specific studies", choices = levels(df$study), selected = levels(df$study))),
                       tabPanel("taVNS specifications",
                                checkboxGroupInput(inputId = "side", label = "Stimulation side", choices = levels(df$Stimulation.side), selected = levels(df$Stimulation.side)),
                                checkboxGroupInput(inputId = "part", label = "Stimulation site", choices = levels(df$Part.of.the.ear.stimulated), selected = levels(df$Part.of.the.ear.stimulated)),
-                               sliderInput(inputId = "stimduration", label = "Stimulation duration (in sec.)", min = min(df$Stimulation.duration.sec.), max = max(df$Stimulation.duration.sec.), value = min(df$Stimulation.duration.sec.), step = 10, sep = "", ticks = F),
+                               sliderInput(inputId = "stimduration", label = "Stimulation duration (in sec.)", min = min(df$Stimulation.duration.sec.), max = max(df$Stimulation.duration.sec.), value = c(min(df$Stimulation.duration.sec.), max(df$Stimulation.duration.sec.)), step = 10, sep = "", ticks = F),
                                checkboxGroupInput(inputId = "intensity1", label = "Intensity chosen", choices = levels(df$Intensity.fixed.or.mean), selected = levels(df$Intensity.fixed.or.mean)),
                                checkboxGroupInput(inputId = "device", label = "taVNS device", choices = levels(df$taVNS.Device), selected = levels(df$taVNS.Device)),
-                               sliderInput(inputId = "intensity2", label = "Intensity (in mA) >=", min = min(df$Mean.Intensity..mA.), max = max(df$Mean.Intensity..mA.), value = min(df$Mean.Intensity..mA.), step = 0.1, sep = "", ticks = F)),
+                               sliderInput(inputId = "intensity2", label = "Intensity (in mA)", min = min(df$Mean.Intensity..mA.), max = max(df$Mean.Intensity..mA.), value = c(min(df$Mean.Intensity..mA.), max(df$Mean.Intensity..mA.)), step = 0.1, sep = "", ticks = F)),
                       tabPanel("Prior specifications",
                                numericInput(inputId = "mupriormean", label = "µ prior mean", value = 0, step = 0.1),
                                numericInput(inputId = "mupriorsd", label = "µ prior standard deviation", value = 1.5, step = 0.1, min = 0),

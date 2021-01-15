@@ -1,55 +1,46 @@
 #######################################################################################
-################### EFFECT OF taVNS ON HRV - A BAYSIAN META-ANALYSIS ##################
+################### EFFECT OF taVNS ON HRV - A BAYESIAN META-ANALYSIS #################
 #######################################################################################
 
-################### Shiny App v.2 20.08.2020 SERVER ###################################
-# Initialize #----
-# rm(list=ls())
-# if (!require("pacman")) install.packages("pacman")
-# library(pacman)
-# pacman::p_load(bayesmeta, car, cowplot, dplyr, DT, esc, data.table, 
-#                ggplot2, knitr, MAd, readr, readxl, R.rsp, shiny, 
-#                shinycssloaders, shinythemes, stringr, tidyr, xtable) 
-# load(file = "df.RDa")
-# load(file = "screened.RDa")
-# source("HelperFunctions.R")
-#----
+################### Shiny App v.2 21.12.2020 SERVER ###################################
+
 # Define server logic
 server <- function(input, output) {
-  # Create parameter reactive for HRV parameter columns in study overview
+  # Create parameters reactive for HRV parameter columns in study overview
   parameters <- reactive({input$hrvparam})
   # Create MA reactive for all outputs
   MA <- reactive({
-    # Create subset based on chosen inclusion criteria
-    df_sub <- df %>% filter(df$Design %in% input$design
-                            & df$HRV.Parameter %in% input$hrvparam
-                            & df$Sample %in% input$sample
-                            & df$Age.Category %in% input$age
-                            & df$Blindness %in% input$blind
-                            & df$Stimulation.side %in% input$side
-                            & df$Publication.Year >= input$pubyear
-                            & df$Control.Type %in% input$control
-                            & df$Part.of.the.ear.stimulated %in% input$part
-                            & df$Intensity.fixed.or.mean %in% input$intensity1
-                            & df$Mean.Intensity..mA. >= input$intensity2
-                            & df$Stimulation.duration.sec. >= input$stimduration
-                            & df$taVNS.Device %in% input$device
-                            & df$study %in% input$included)
-    # Aggregate effect sizes
+    ## Create subset based on chosen inclusion criteria
+    df_sub <- df %>% filter(Design %in% input$design,
+                            HRV.Parameter %in% input$hrvparam,
+                            Sample %in% input$sample,
+                            Mean.Age >= input$age[1], Mean.Age <= input$age[2],
+                            Percent.Females >= input$gender[1], Percent.Females <= input$gender[2],
+                            Blindness %in% input$blind,
+                            Stimulation.side %in% input$side,
+                            Publication.Year >= input$pubyear[1], Publication.Year <= input$pubyear[2],
+                            Control.Type %in% input$control,
+                            Part.of.the.ear.stimulated %in% input$part,
+                            Intensity.fixed.or.mean %in% input$intensity1,
+                            Mean.Intensity..mA. >= input$intensity2[1], Mean.Intensity..mA. <= input$intensity2[2],
+                            Stimulation.duration.sec. >= input$stimduration[1], Stimulation.duration.sec. <= input$stimduration[2],
+                            taVNS.Device %in% input$device,
+                            study %in% input$included)
+    ## Aggregate effect sizes
     aggES <- agg(id     = Paper.No,
                  es     = yi,
                  var    = vi,
                  data   = df_sub,
                  cor = .5,
                  method = "BHHR")
-    # Merging aggregated ES with original dataframe 
+    ## Merging aggregated ES with original dataframe 
     MA <- merge(x = aggES, y = df_sub, by.x = "id", by.y = "Paper.No")
     MA <- unique(setDT(MA) [sort.list(id)], by = "id")
     MA <- with(MA, MA[order(MA$es)])
   })
-  # Create bma reactive for all outputs
+  # Create bma reactive needed for all outputs
   bma <- reactive({
-    # Generate bayesmeta-object "bma", which stores all relevant results, depending on tau prior chosen
+    ## Generate bayesmeta-object "bma" depending on tau prior chosen
     if (input$tauprior == "Half cauchy") {
       bma <- bayesmeta(y = MA()$es,sigma = sqrt(MA()$var), labels = MA()$study, 
                        tau.prior = function(t) dhalfcauchy(t, scale = input$scaletau), 
@@ -64,24 +55,26 @@ server <- function(input, output) {
                        mu.prior = c("mean" = input$mupriormean, "sd" = input$mupriorsd))
     }
   })
-  # Study overview
+  # Study overview panel
   output$studies <- DT::renderDataTable({
     MA <- as.data.frame(MA())
     MA <- MA %>% mutate_if(is.numeric, round, digits=3)
     parameters <- base::subset(MA, select = c(parameters()))
-    criteria <- base::subset(MA, select = c(study, es, var, Design, Sample, Age.Category, Blindness, Total.N, Stimulation.side, Part.of.the.ear.stimulated, taVNS.Device, Comment))
-    colnames(criteria) <- c("Study", "Hedges' g", "Variance", "Design", "Sample", "Age group", "Blindness", "Total N", "Stimulation side", "Stimulation site", "taVNS device", "Comment")
+    criteria <- base::subset(MA, select = c(study, es, var, Design, Sample,Total.N,Mean.Age,Percent.Females, Blindness, Stimulation.side, Part.of.the.ear.stimulated, taVNS.Device, Comment, Results.published))
+    colnames(criteria) <- c("Study", "Hedges' g", "Variance", "Design", "Sample", "Total N", "Mean age","Percent female", "Blindness", "Stimulation side", "Stimulation site", "taVNS device", "Comment", "Results")
     MAclean <- cbind(criteria,parameters)
-    DT::datatable(MAclean,
+    DT::datatable(MAclean, extensions = "FixedColumns",
                   options = list(dom = 't', 
-                                 pageLength = nrow(MAclean)))
+                                 pageLength = nrow(MAclean),
+                                 scrollX = T, 
+                                 fixedColumns = list(leftColumns = 2)))
   })
-  # Warning message if 3 or less studies are included
-  output$warning <- renderPrint({
-    MA <- as.data.frame(MA())
-    if (nrow(MA) < 4) {print('WARNING: With the chosen inclusion criteria, 3 or less studies will be included in the analysis.')}
+    ## Warning message if 3 or less studies are included
+    output$warning <- renderPrint({
+      MA <- as.data.frame(MA())
+      if (nrow(MA) < 4) {print('WARNING: With the chosen inclusion criteria, 3 or less studies will be included in the analysis.')}
   })
-  # Outliers
+  # Outliers panel
   output$boxplot <- renderPlot({
     MAo <- MA() %>% tibble::rownames_to_column(var = "outlier") %>% mutate(is_outlier=ifelse(is_outlier(es), es, as.numeric(NA)))
     MAo$study[which(is.na(MAo$is_outlier))] <- as.numeric(NA)
@@ -94,15 +87,15 @@ server <- function(input, output) {
       theme_minimal_hgrid(12)
   }, width = 600, height = 600)
   
-  # Forest Plot
+  # Forest Plot panel
   output$forest <- renderPlot({
     forestplot.bayesmeta(bma(), xlab = "Hedges' g")
   })
-  # Funnel Plot
+  # Funnel Plot panel
   output$funnel <- renderPlot({
     funnel.bayesmeta(bma(), main = "")
   })
-  # Statistics
+  # Statistics panel
   output$bf <- renderPrint ({
     bma()$bayesfactor[1,]
   })
@@ -115,7 +108,7 @@ server <- function(input, output) {
   output$MAP <- renderPrint({
     bma()$MAP
   })
-  # Full texts screened
+  # Full texts screened panel
   output$screened <- DT::renderDataTable({
     datatable(screened, escape = F, options = list(columnDefs = list(list(
                                          targets = 2,
@@ -127,7 +120,7 @@ server <- function(input, output) {
                                        ))),
               class = "display")
   })
-  # Additional plots
+  # Additional plots panel
   output$evupdate <- renderPlot({
     priorposteriorlikelihood.ggplot(bma())
   }, width = 800)
