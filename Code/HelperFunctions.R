@@ -10,8 +10,8 @@ load(file = "screened.RDa")
 
 # Generate function "priorposteriorlikelihood.ggplot"
 ## Plots prior, posterior and likelihood distribution
-priorposteriorlikelihood.ggplot <- function(bma) {
-  effect <- seq(-2, 2, length = 200)
+priorposteriorlikelihood.ggplot <- function(bma, lowerbound, upperbound) {
+  effect <- seq(lowerbound, upperbound, length = 200)
   colors <- c("posterior" = "#D55E00", "prior" = "#009E73", "likelihood" = "#0072B2")
   devAskNewPage(ask = FALSE)
   ggplot(data = NULL, aes(x=effect,y=bma$dposterior(mu = effect))) + 
@@ -20,7 +20,7 @@ priorposteriorlikelihood.ggplot <- function(bma) {
     geom_line(aes(x = effect, y = bma$dprior(mu = effect), col = "prior")) + 
     geom_vline(xintercept = 0, col = "gray") + 
     theme_minimal_hgrid(12) + 
-    labs(x = "effect", y = "probability density", color = "legend") + 
+    labs(x = "effect μ", y = "probability density", color = "legend") + 
     scale_color_manual(values = colors)
 }
 
@@ -33,7 +33,7 @@ tauprior.ggplot <- function(bma) {
     geom_line(aes(x = effect, y = bma$dprior(tau = effect))) + 
     geom_vline(xintercept = 0, col = "gray") + 
     theme_minimal_hgrid(12) + 
-    labs(x = "tau", y = "probability density") 
+    labs(x = "heterogeneity τ", y = "probability density") 
 }
 
 # Generate function "robustness"
@@ -59,12 +59,13 @@ robustness <- function(MA,SD, tauprior) {
   names <- c("Narrow", "User","Wide","Ultrawide")
   deflabel <- data.frame(Ref = "Default", val = 1.5, stringsAsFactors = F)
   ggplot(data = NULL, aes(SDS,BFS)) +
+    geom_hline(yintercept = 1, color = "grey", size = 0.3, alpha = .6) + 
     geom_hline(yintercept = 3, color = "grey", size = 0.3, alpha = .6) + 
     geom_hline(yintercept = 10, color = "grey", size = 0.3, alpha = .6) + 
-    geom_hline(yintercept = 20, color = "grey", size = 0.3, alpha = .6) + 
     geom_hline(yintercept = 30, color = "grey", size = 0.3, alpha = .6) + 
     geom_vline(xintercept = 1.5, color = "#D55E00", size = 0.3, alpha = .4) +
     geom_point(aes(SDS,BFS), alpha = .75) + 
+    geom_text(aes(label = round(BFS, digits = 2)), hjust = -0.75) +
     geom_point(aes(1.5, default$bayesfactor[1,2]), alpha = .75) +
     scale_x_continuous(breaks = c(SDS, 1.5), limits = c(SDS[1]-.5,SDS[4]+3)) +
     scale_y_continuous(limits = c(0,BFS[4]+10)) +
@@ -73,11 +74,11 @@ robustness <- function(MA,SD, tauprior) {
     geom_text(mapping = aes(x = val, y = 0, label = Ref, hjust = -.2, vjust = -1), data = deflabel, color = "#D55E00") +
     labs(x = "standard deviations", y = "BF01") +
     theme_cowplot(12) +
-    annotate("text", label = "Anecdotal evidence for H0", x = SDS[4] + 2, y = 6.5) +
-    annotate("text", label = "Substantial evidence for H0", x = SDS[4] + 2, y = 15) +
-    annotate("text", label = "Strong evidence for H0", x = SDS[4] + 2, y = 25) +
-    annotate("text", label = "Strong evidence for H0", x = SDS[4] + 2, y = (BFS[4]+10+30)/2) +
-    annotate("text", label = "Anecdotal evidence for H1", x = SDS[4] + 2, y = 0)
+    annotate("text", label = "Moderate evidence for H0", x = SDS[4] + 2, y = 6.5) + #3-10
+    annotate("text", label = "Strong evidence for H0", x = SDS[4] + 2, y = 20) + #10-30
+    annotate("text", label = "Very strong evidence for H0", x = SDS[4] + 2, y = (BFS[4]+10+30)/2) + #30-100
+    annotate("text", label = "Anecdotal evidence for H0", x = SDS[4] + 2, y = 2) + #1-3
+    annotate("text", label = "Anecdotal evidence for H1", x = SDS[4] + 2, y = 0) #0-1
 }
 
 # Generate function "robustness2"
@@ -99,24 +100,26 @@ robustness2 <- function(MA,SD, tauprior) {
   SDS <- c(SD/2,SD,SD+1,SD+2)
   names <- c("Narrow", "Default","Wide","Ultrawide")
   ggplot(data = NULL, aes(SDS,BFS)) +
+    geom_hline(yintercept = 1, color = "grey", size = 0.3, alpha = .6) + 
     geom_hline(yintercept = 3, color = "grey", size = 0.3, alpha = .6) + 
     geom_hline(yintercept = 10, color = "grey", size = 0.3, alpha = .6) + 
-    geom_hline(yintercept = 20, color = "grey", size = 0.3, alpha = .6) + 
     geom_hline(yintercept = 30, color = "grey", size = 0.3, alpha = .6) + 
     geom_point(aes(SDS,BFS), alpha = .75) + 
     geom_point(aes(1.5, default$bayesfactor[1,2]), alpha = .75) +
+    geom_text(aes(label = round(BFS, digits = 2)), hjust = -0.75) +
     scale_x_continuous(breaks = c(SDS, 1.5), limits = c(SDS[1]-.5,SDS[4]+3)) +
-    scale_y_continuous(limits = c(0,BFS[4]+10)) +
+    scale_y_continuous(limits = c(-1,BFS[4]+10)) +
     geom_line(aes(SDS,BFS), alpha = .4) +
     geom_text(aes(label = names),vjust = -1, size = 6) +
     labs(x = "Standard deviations", y = "BF01") +
     theme_classic(18) +
-    ggtitle("A.") +
-    annotate("text", label = "Anecdotal evidence for H0", x = SDS[4] + 2, y = 6.5, size = 6) +
-    annotate("text", label = "Substantial evidence for H0", x = SDS[4] + 2, y = 15, size = 6) +
-    annotate("text", label = "Strong evidence for H0", x = SDS[4] + 2, y = 25, size = 6) +
-    annotate("text", label = "Strong evidence for H0", x = SDS[4] + 2, y = (BFS[4]+10+30)/2, size = 6) +
-    annotate("text", label = "Anecdotal evidence for H1", x = SDS[4] + 2, y = 0, size = 6)
+#    ggtitle("A.") +
+    annotate("text", label = "Moderate evidence for H0", x = SDS[4] + 2, y = 6.5, size = 3) + #3-10
+    annotate("text", label = "Strong evidence for H0", x = SDS[4] + 2, y = 20, size = 3) + #10-30
+    annotate("text", label = "Very strong evidence for H0", x = SDS[4] + 2, y = (BFS[4]+10+30)/2, size = 3) + #30-100
+    annotate("text", label = "Anecdotal evidence for H0", x = SDS[4] + 2, y = 2, size = 3) + #1-3
+    annotate("text", label = "Anecdotal evidence for H1", x = SDS[4] + 2, y = -0.3, size = 3) + #0-1
+    theme(axis.title.y = element_text(margin = margin(t = 0, r = 20, b = 0, l = 0)))
 }
 
 # Generate function "is_outlier"

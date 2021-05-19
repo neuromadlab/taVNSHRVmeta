@@ -60,8 +60,8 @@ server <- function(input, output) {
     MA <- as.data.frame(MA())
     MA <- MA %>% mutate_if(is.numeric, round, digits=3)
     parameters <- base::subset(MA, select = c(parameters()))
-    criteria <- base::subset(MA, select = c(study, es, var, Design, Sample,Total.N,Mean.Age,Percent.Females, Blindness, Stimulation.side, Part.of.the.ear.stimulated, taVNS.Device, Comment, Results.published))
-    colnames(criteria) <- c("Study", "Hedges' g", "Variance", "Design", "Sample", "Total N", "Mean age","Percent female", "Blindness", "Stimulation side", "Stimulation site", "taVNS device", "Comment", "Results")
+    criteria <- base::subset(MA, select = c(study, es, var, Design, Sample,Total.N,Mean.Age,Percent.Females, Blindness, Stimulation.side, Part.of.the.ear.stimulated, Control.Type, taVNS.Device, Comment, Results.published))
+    colnames(criteria) <- c("Study", "Hedges' g", "Variance", "Design", "Sample", "Total N", "Mean age","Percent female", "Blindness", "Stimulation side", "Stimulation site", "Control type", "taVNS device", "Comment", "Results")
     MAclean <- cbind(criteria,parameters)
     DT::datatable(MAclean, extensions = "FixedColumns",
                   options = list(dom = 't', 
@@ -106,7 +106,7 @@ server <- function(input, output) {
     bma()$ML
   })
   output$MAP <- renderPrint({
-    bma()$MAP
+    bma()$MAP[1,]
   })
   # Full texts screened panel
   output$screened <- DT::renderDataTable({
@@ -122,7 +122,7 @@ server <- function(input, output) {
   })
   # Additional plots panel
   output$evupdate <- renderPlot({
-    priorposteriorlikelihood.ggplot(bma())
+    priorposteriorlikelihood.ggplot(bma(), lowerbound = 0 - (input$mupriormean + 1) * 1.5, upperbound = 0 + (input$mupriormean + 1) * 1.5)
   }, width = 800)
   output$joint <- renderPlot({
     plot.bayesmeta(bma(), which=2, main = "")
@@ -130,6 +130,10 @@ server <- function(input, output) {
   output$taupriorplot <- renderPlot({
     tauprior.ggplot(bma())
   }, width = 800)
+  
+  # Bayes factor robustness plot panel
+  output$warning2 <- renderPrint({
+    print("WARNING: Plot will not be computed, because an improper τ prior was chosen. Proper τ priors are 'Half student t' and 'Half cauchy'.")})
   output$robustplot <- renderPlot({
     if (input$robust == "Yes" &
         input$tauprior == "Half cauchy") {
